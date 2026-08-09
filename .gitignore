@@ -35,3 +35,9 @@ metastore_db/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Spark streaming checkpoints
+checkpoints/
+
+# JDBC driver
+*.jar

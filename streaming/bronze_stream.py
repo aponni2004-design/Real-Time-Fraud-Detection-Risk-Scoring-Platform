@@ -7,9 +7,13 @@ from pyspark.sql.types import (
     DoubleType
 )
 
+# -----------------------------------------
+# 1. Create Spark session
+# -----------------------------------------
+
 spark = (
     SparkSession.builder
-    .appName("FraudDetectionKafkaStream")
+    .appName("FraudDetectionBronze")
     .config(
         "spark.jars.packages",
         "org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.2"
@@ -20,14 +24,13 @@ spark = (
 spark.sparkContext.setLogLevel("WARN")
 
 print("===================================")
-print("Fraud Detection Kafka Stream")
+print("Fraud Detection - Bronze Layer")
 print("Spark Version:", spark.version)
 print("===================================")
 
-
-# -----------------------------
-# 1. Kafka source
-# -----------------------------
+# -----------------------------------------
+# 2. Kafka source
+# -----------------------------------------
 
 raw_df = (
     spark.readStream
@@ -38,10 +41,9 @@ raw_df = (
     .load()
 )
 
-
-# -----------------------------
-# 2. Transaction schema
-# -----------------------------
+# -----------------------------------------
+# 3. Transaction schema
+# -----------------------------------------
 
 transaction_schema = StructType([
     StructField("transaction_id", StringType(), True),
@@ -57,10 +59,9 @@ transaction_schema = StructType([
     StructField("timestamp", StringType(), True)
 ])
 
-
-# -----------------------------
-# 3. Parse JSON
-# -----------------------------
+# -----------------------------------------
+# 4. Parse Kafka JSON
+# -----------------------------------------
 
 transactions = (
     raw_df
@@ -74,20 +75,28 @@ transactions = (
     .select("data.*")
 )
 
-
-# -----------------------------
-# 4. Display structured data
-# -----------------------------
+# -----------------------------------------
+# 5. Write to Bronze
+# -----------------------------------------
 
 query = (
     transactions
     .writeStream
-    .format("console")
+    .format("parquet")
     .outputMode("append")
-    .option("truncate", "false")
-    .option("checkpointLocation",
-            "D:/DataEngineeringProjects/RealTimeFraudDetectionPlatform/checkpoints/kafka_test")
+    .option(
+        "path",
+        "D:/DataEngineeringProjects/RealTimeFraudDetectionPlatform/data/bronze/transactions"
+    )
+    .option(
+        "checkpointLocation",
+        "D:/DataEngineeringProjects/RealTimeFraudDetectionPlatform/checkpoints/bronze/transactions"
+    )
     .start()
 )
+
+print("Bronze streaming started successfully!")
+print("Writing transactions to:")
+print("data/bronze/transactions")
 
 query.awaitTermination()
