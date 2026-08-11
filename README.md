@@ -310,7 +310,9 @@ The dashboard provides an executive view of the fraud detection system.
 * Payment Method
 * City
 
+### Dashboard Preview
 
+![Real-Time Fraud Detection Dashboard](dashboard_preview.png)
 
 # Project Structure
 
@@ -549,8 +551,6 @@ The project demonstrates practical knowledge of:
 * Docker
 * Git/GitHub
 
-
-
 # Author
 
 **Ponni A**
@@ -558,8 +558,6 @@ The project demonstrates practical knowledge of:
 Biotechnology Graduate → Aspiring Data Engineer
 
 Interested in building scalable data pipelines, real-time processing systems and analytical data platforms.
-
-
 
 ## Disclaimer
 
