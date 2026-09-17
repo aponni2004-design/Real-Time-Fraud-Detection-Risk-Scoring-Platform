@@ -41,3 +41,5 @@ checkpoints/
 
 # JDBC driver
 *.jar
+
+data/*capacity_test_10k/

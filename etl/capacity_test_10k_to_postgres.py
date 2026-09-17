@@ -37,7 +37,7 @@ print("======================================")
 gold_path = (
     "D:/DataEngineeringProjects/"
     "RealTimeFraudDetectionPlatform/"
-    "data/gold/fraud_transactions"
+    "data/gold_capacity_test_10k"
 )
 
 gold_df = spark.read.parquet(gold_path)
@@ -56,7 +56,7 @@ if gold_count == 0:
 # 3. POSTGRESQL CONNECTION
 # =========================================================
 
-jdbc_url = "jdbc:postgresql://localhost:5432/fraud_detection_dw"
+jdbc_url = "jdbc:postgresql://localhost:5432/fraud_detection_capacity_10k"
 
 properties = {
     "user": "postgres",

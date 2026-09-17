@@ -11,28 +11,23 @@ from pyspark.sql.types import (
     StringType,
     DoubleType
 )
-
 # -----------------------------------------
 # 1. Create Spark session
 # -----------------------------------------
-
 spark = (
     SparkSession.builder
-    .appName("FraudDetectionSilver")
+    .appName("FraudDetectionSilverCapacityTest10K")
+    .config("spark.hadoop.io.native.lib.available", "false")
     .getOrCreate()
 )
-
 spark.sparkContext.setLogLevel("WARN")
-
 print("===================================")
-print("Fraud Detection - Silver Layer")
+print("Fraud Detection - Silver Layer 10K")
 print("Spark Version:", spark.version)
 print("===================================")
-
 # -----------------------------------------
-# 2. Define Bronze schema
+# 2. Define input schema
 # -----------------------------------------
-
 transaction_schema = StructType([
     StructField("transaction_id", StringType(), True),
     StructField("customer_id", StringType(), True),
@@ -46,27 +41,22 @@ transaction_schema = StructType([
     StructField("country", StringType(), True),
     StructField("timestamp", StringType(), True)
 ])
-
 # -----------------------------------------
-# 3. Read Bronze as streaming source
+# 3. Read 10K capacity-test output
 # -----------------------------------------
-
-bronze_df = (
-    spark.readStream
+bronze_10k_df = (
+    spark.read
     .schema(transaction_schema)
     .format("parquet")
     .load(
-        "D:/DataEngineeringProjects/RealTimeFraudDetectionPlatform/data/bronze/transactions"
+        "D:/DataEngineeringProjects/RealTimeFraudDetectionPlatform/data/capacity_test_10k"
     )
 )
-
 # -----------------------------------------
 # 4. Clean and transform
 # -----------------------------------------
-
-silver_df = (
-    bronze_df
-
+silver_10k_df = (
+    bronze_10k_df
     .withColumn("transaction_id", trim(col("transaction_id")))
     .withColumn("customer_id", trim(col("customer_id")))
     .withColumn("currency", trim(col("currency")))
@@ -76,13 +66,11 @@ silver_df = (
     .withColumn("device_id", trim(col("device_id")))
     .withColumn("city", trim(col("city")))
     .withColumn("country", trim(col("country")))
-
     # Convert timestamp string to timestamp
     .withColumn(
         "transaction_timestamp",
         to_timestamp(col("timestamp"))
     )
-
     # Keep transactions with required fields
     .filter(
         col("transaction_id").isNotNull()
@@ -90,7 +78,6 @@ silver_df = (
         & col("amount").isNotNull()
         & (col("amount") > 0)
     )
-
     # Categorize transaction amount
     .withColumn(
         "amount_category",
@@ -100,33 +87,21 @@ silver_df = (
     )
     # Remove duplicate transactions
     .dropDuplicates(["transaction_id"])
-    
     # Remove original string timestamp
     .drop("timestamp")
 )
-
 # -----------------------------------------
-# 5. Write Silver
+# 5. Write isolated 10K Silver output
 # -----------------------------------------
-
-query = (
-    silver_df
-    .writeStream
-    .format("parquet")
-    .outputMode("append")
-    .option(
-        "path",
-        "D:/DataEngineeringProjects/RealTimeFraudDetectionPlatform/data/silver/transactions"
-    )
-    .option(
-        "checkpointLocation",
-        "D:/DataEngineeringProjects/RealTimeFraudDetectionPlatform/checkpoints/silver/transactions"
-    )
-    .start()
+output_path = (
+    "D:/DataEngineeringProjects/"
+    "RealTimeFraudDetectionPlatform/"
+    "data/silver_capacity_test_10k"
 )
-
-print("Silver streaming started successfully!")
-print("Reading from: data/bronze/transactions")
-print("Writing to:   data/silver/transactions")
-
-query.awaitTermination()
+silver_10k_df.write.mode("overwrite").parquet(output_path)
+print("===================================")
+print("10K Silver transformation completed")
+print("Input:  data/capacity_test_10k")
+print("Output: data/silver_capacity_test_10k")
+print("===================================")
+spark.stop()
